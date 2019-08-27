@@ -1,0 +1,142 @@
+<mat-toolbar>
+    <mat-toolbar-row>
+      <span style="font-weight:bold">
+        Show 
+        <select [(ngModel)]="pageNumber">
+          <option value="10">10</option>
+          <option value="15">15</option>
+          <option value="20">20</option>
+          <option value="25">25</option>
+          <option value="30">30</option>
+        </select> 
+        entities
+      </span>
+      <span style="flex: 1 1 auto"></span>
+      <span style="margin-right: 3rem">Order by: 
+          <select id="orderType" [(ngModel)]="orderType">
+            <option value="Company">Quote Type</option> 
+            <option value="QuoteNum">Quote Number</option>
+            <option value="ExpireDate">Due Date</option>
+          </select> 
+          Descending: 
+          <input type="checkbox" [(ngModel)]="isDesc" id="desc" name="desc">
+      </span> 
+      <span>
+        Search: <input type="text" [(ngModel)]="searchQuery"> 
+      </span>
+    </mat-toolbar-row>
+</mat-toolbar>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Quote Type</th>
+            <th scope="col">Quote#</th>
+            <th scope="col">Contact</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Due Date</th>
+            <th scope="col">Price</th>
+            <th scope="col">Task Type</th>
+            <th scope="col"> </th>
+            <th scope="col"> </th>
+            <th scope="col"> </th>
+        </tr>
+    </thead>
+    <tbody class="border-top border-bottom border-dark">
+        <tr *ngFor="let quote of quotes | paginate: { itemsPerPage: pageNumber, currentPage: p, totalItems: quotes.length} | orderBy: orderType : isDesc | myFilter: 'Company' : searchQuery">
+            <td>{{ quote.Company }}</td>
+            <td><a href="#">{{quote.QuoteNum}}</a></td>
+            <td> </td>
+            <td>{{quote.Description | titlecase}}</td>
+            <td>{{quote.ExpireDate | date: 'M/d/y hh:mm'}}</td>
+            <td>{{quote.Price | currency}}</td>
+            <td>Follow-Up</td>
+            <td><a [routerLink]="['../quote/',quote.ID]" style="color:black"><i class="fas fa-eye"></i></a></td>
+            <td><a style="cursor:pointer" (click)="onUpdateQuote(quote);open(updateQuote)"><i class="fas fa-edit"></i></a></td>
+            <td><i class="fas fa-comment"></i></td>
+        </tr>
+    </tbody>
+</table>
+<strong>Showing {{1 + (p-1)*pageNumber}} to {{(p*pageNumber >= quotes.length ? quotes.length : p*pageNumber)}} of {{quotes.length}} entities</strong>
+<pagination-controls class="my-pagination" style="float: right;" (pageChange)="p = $event" maxSize="5"></pagination-controls>
+<ng-template #updateQuote let-modal>
+  <div class="modal-header" style="background: darkblue;padding: 0">
+    <h4 class="modal-title" id="modal-updateQuote-title" style="color: white; margin-left: 20px">Update Quote {{updatedQuote.QuoteNum}}</h4>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="updateQuoteForm" (ngSubmit)="quoteUpdate()">
+      <div class="form-group form-inline" style="float: left; margin-right: 25px;">
+        <label>Quote Type</label>
+        <input 
+          formControlName="quoteType" 
+          [ngClass]="{reactiveInput : !updateQuoteForm.controls.quoteType?.valid && updateQuoteForm.controls.quoteType?.touched}" 
+          type="text" 
+          class="form-control" 
+          style="margin-left: 30px; width: 300px">
+      </div>
+      <div class="form-group form-inline">
+        <label>Quote Number</label>
+        <input 
+          formControlName="quoteNumber"
+          [ngClass]="{reactiveInput : !updateQuoteForm.controls.quoteNumber?.valid && updateQuoteForm.controls.quoteNumber?.touched}"
+          type="text" 
+          class="form-control" 
+          style="margin-left: 25px; width: 100px;">
+      </div>
+      <div formGroupName="task">
+        <div class="form-group form-inline">
+          <label>Task Type</label>
+          <input 
+            formControlName="taskType" 
+            [ngClass]="{reactiveInput : !updateQuoteForm.get('task').controls.taskType?.valid && updateQuoteForm.get('task').controls.taskType?.touched}"
+            type="text" 
+            class="form-control" 
+            style="width: 300px; margin-left: 45px;">
+        </div>
+        <div class="form-group form-inline">
+          <label>Contact</label>
+          <input 
+            formControlName="contact" 
+            [ngClass]="{reactiveInput : !updateQuoteForm.get('task').controls.contact?.valid && updateQuoteForm.get('task').controls.contact?.touched}"
+            type="text" 
+            class="form-control" 
+            style="margin-left: 55px; width: 300px">
+        </div>
+      </div>
+      <div class="form-group form-inline">
+        <label>Price</label>
+        <input 
+          formControlName="price" 
+          [ngClass]="{reactiveInput : !updateQuoteForm.controls.price?.valid && updateQuoteForm.controls.price?.touched}"
+          type="text" 
+          class="form-control" 
+          style="margin-left: 75px;width: 300px">
+      </div>
+      <div class="form-group form-inline">
+        <label>Due Date</label>
+        <input 
+          formControlName="dueDate" 
+          [ngClass]="{reactiveInput : !updateQuoteForm.controls.dueDate?.valid && updateQuoteForm.controls.dueDate?.touched}"
+          type="datetime-local" 
+          class="form-control" 
+          style="margin-left: 43px; width: 300px">
+      </div>
+      <div class="form-group">
+        <label>Detail</label>
+        <textarea 
+          formControlName="quoteDetail" 
+          [ngClass]="{reactiveInput : !updateQuoteForm.controls.quoteDetail?.valid && updateQuoteForm.controls.quoteDetail?.touched}"
+          id="quoteDetailTextarea"  
+          cols="8" rows="5"
+          class="form-control"></textarea>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-success" (click)="quoteUpdate(); modal.close('Save click')">
+      <i class="far fa-save"></i> Update
+    </button>
+    <button type="button" class="btn btn-success" (click)="modal.dismiss('Cross click')">
+      <i class="far fa-times-circle"></i> Cancel
+    </button>
+  </div>
+</ng-template>
